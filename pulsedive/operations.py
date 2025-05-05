@@ -4,9 +4,9 @@ MIT License
 Copyright (c) 2025 Fortinet Inc
 Copyright end
 """
+
 import requests
 from connectors.core.connector import Connector, get_logger, ConnectorError
-import urllib3
 
 error_msg = {
     401: 'Authentication failed due to invalid credentials',
@@ -16,28 +16,25 @@ error_msg = {
     'time_out': 'The request timed out while trying to connect to the remote server',
 }
 
-logger = get_logger("Pulsedive")
-
-urllib3.disable_warnings()
+logger = get_logger("pulsedive")
 
 
-def make_request(config, endpoint='', params=None, data=None, method='GET', headers=None, url=None,
-                 json_data=None):
+def make_request(config, endpoint=None, params=None, data=None, method='GET', headers=None, json_data=None):
     server_url = config.get('server_url', '').strip().strip('/')
     if not server_url.startswith('http') or not server_url.startswith('https'):
         server_url = 'https://' + server_url
-        authkey = config.get("authkey", '')
-    verify_ssl = config.get("verify_ssl", True)
+    api_key = config.get("api_key")
+    verify_ssl = config.get("verify_ssl")
 
     try:
-        if url is None:
-            url = server_url + endpoint
+        headers = {"Content-Type": "application/json"}
+        url = server_url + endpoint
         logger.info(f"Making {method} request to URL: {url}")
         logger.info(f"Headers: {headers}")
         logger.info(f"Params: {params}")
         logger.info(f"Data: {data}")
         logger.info(f"JSON Data: {json_data}")
-
+        params.update({'key': '{0}'.format(api_key)})
         response = requests.request(method=method, url=url,
                                     headers=headers, data=data, json=json_data, params=params,
                                     verify=verify_ssl)
@@ -62,9 +59,9 @@ def make_request(config, endpoint='', params=None, data=None, method='GET', head
 
 def _check_health(config):
     try:
-        endpoint = "/api/info.php?indicator=google.com"
-        method = "GET"
-        response = make_request(config, endpoint=endpoint, method=method)
+        endpoint = "/api/info.php"
+        params = {"indicator": "google.com"}
+        response = make_request(config, endpoint=endpoint, params=params)
         if response:
             return True
     except Exception as e:
@@ -74,8 +71,7 @@ def _check_health(config):
 def get_domain_reputation(config: dict, params: dict):
     try:
         endpoint = "/api/info.php"  # edit endpoint
-        method = "GET"  # GET/POST/PUT/DELETE
-        response = make_request(config, endpoint=endpoint, method=method, params=params)
+        response = make_request(config, endpoint=endpoint, params=params)
         return response
     except Exception as e:
         raise Exception(e)
@@ -84,8 +80,7 @@ def get_domain_reputation(config: dict, params: dict):
 def get_ip_reputation(config: dict, params: dict):
     try:
         endpoint = "/api/info.php"  # edit endpoint
-        method = "GET"  # GET/POST/PUT/DELETE
-        response = make_request(config, endpoint=endpoint, method=method, params=params)
+        response = make_request(config, endpoint=endpoint, params=params)
         return response
     except Exception as e:
         raise Exception(e)
@@ -94,11 +89,9 @@ def get_ip_reputation(config: dict, params: dict):
 def get_links_of_indicator(config: dict, params: dict):
     try:
         endpoint = "/api/info.php"  # edit endpoint
-        method = "GET"  # GET/POST/PUT/DELETE
         params.update({'get': 'link'})
-        response = make_request(config, endpoint=endpoint, method=method, params=params)
+        response = make_request(config, endpoint=endpoint, params=params)
         return response
-
     except Exception as e:
         raise Exception(e)
 

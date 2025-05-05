@@ -8,7 +8,7 @@ Copyright end
 from connectors.core.connector import Connector, get_logger, ConnectorError
 from .operations import operations, _check_health
 
-logger = get_logger("Pulsedive")
+logger = get_logger("pulsedive")
 
 
 class Pulsedive(Connector):
